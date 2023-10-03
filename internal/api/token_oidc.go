@@ -165,16 +165,18 @@ func (a *API) IdTokenGrant(ctx context.Context, w http.ResponseWriter, r *http.R
 		return oauthError("invalid request", "Unacceptable audience in id_token")
 	}
 
-	tokenHasNonce := idToken.Nonce != ""
-	paramsHasNonce := params.Nonce != ""
+	if !config.External.SkipNonceCheck {
+		tokenHasNonce := idToken.Nonce != ""
+		paramsHasNonce := params.Nonce != ""
 
-	if tokenHasNonce != paramsHasNonce {
-		return oauthError("invalid request", "Passed nonce and nonce in id_token should either both exist or not.")
-	} else if tokenHasNonce && paramsHasNonce {
-		// verify nonce to mitigate replay attacks
-		hash := fmt.Sprintf("%x", sha256.Sum256([]byte(params.Nonce)))
-		if hash != idToken.Nonce {
-			return oauthError("invalid nonce", "Nonces mismatch")
+		if tokenHasNonce != paramsHasNonce {
+			return oauthError("invalid request", "Passed nonce and nonce in id_token should either both exist or not.")
+		} else if tokenHasNonce && paramsHasNonce {
+			// verify nonce to mitigate replay attacks
+			hash := fmt.Sprintf("%x", sha256.Sum256([]byte(params.Nonce)))
+			if hash != idToken.Nonce {
+				return oauthError("invalid nonce", "Nonces mismatch")
+			}
 		}
 	}
 
