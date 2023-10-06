@@ -63,25 +63,19 @@ func NewTwilioProvider(config conf.TwilioProviderConfiguration) (SmsProvider, er
 	}, nil
 }
 
-func (t *TwilioProvider) SendMessage(phone, message, channel, otp string) (string, error) {
+func (t *TwilioProvider) SendMessage(phone string, message string, channel string) (string, error) {
 	switch channel {
 	case SMSProvider, WhatsappProvider:
-		return t.SendSms(phone, message, channel, otp)
+		return t.SendSms(phone, message, channel)
 	default:
 		return "", fmt.Errorf("channel type %q is not supported for Twilio", channel)
 	}
 }
 
 // Send an SMS containing the OTP with Twilio's API
-func (t *TwilioProvider) SendSms(phone, message, channel, otp string) (string, error) {
+func (t *TwilioProvider) SendSms(phone, message, channel string) (string, error) {
 	sender := t.Config.MessageServiceSid
 	receiver := "+" + phone
-	body := url.Values{
-		"To":      {receiver}, // twilio api requires "+" extension to be included
-		"Channel": {channel},
-		"From":    {sender},
-		"Body":    {message},
-	}
 	if channel == WhatsappProvider {
 		receiver = channel + ":" + receiver
 		if isPhoneNumber.MatchString(formatPhoneNumber(sender)) {
